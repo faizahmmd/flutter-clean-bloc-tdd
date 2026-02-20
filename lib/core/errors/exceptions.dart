@@ -66,9 +66,9 @@ class ValidationException extends AppException {
 // try {
 //   await fetchData();
 // } on NetworkException catch (e) {
-//   print('Network error: ${e.message}');
-//   print('Stack trace: ${e.stackTrace}');
+//   debugPrint('Network error: ${e.message}');
+//   debugPrint('Stack trace: ${e.stackTrace}');
 // } on AppException catch (e) {
-//   print('App error: ${e.message}');
+//   debugPrint('App error: ${e.message}');
 // }
 // ====================================================

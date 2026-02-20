@@ -191,8 +191,8 @@ void main() {
       final shouldBeValid = testCase['shouldBeValid'] as bool;
       final reason = testCase['reason'] as String;
 
-      print('\nTesting: $reason');
-      print('Email: "$email"');
+      debugPrint('\nTesting: $reason');
+      debugPrint('Email: "$email"');
 
       // Create the state with Formz Email
       final testState = AuthState(
@@ -201,8 +201,8 @@ void main() {
         status: FormzSubmissionStatus.initial,
       );
 
-      print('Email isValid (Formz): ${testState.email.isValid}');
-      print('Expected: $shouldBeValid');
+      debugPrint('Email isValid (Formz): ${testState.email.isValid}');
+      debugPrint('Expected: $shouldBeValid');
 
       when(() => mockAuthBloc.state).thenReturn(testState);
       when(
@@ -216,14 +216,14 @@ void main() {
 
       // Check button state based on Formz validation
       if (shouldBeValid) {
-        print('Button should be ENABLED');
+        debugPrint('Button should be ENABLED');
         expect(
           button.onPressed,
           isNotNull,
           reason: 'Button should be enabled for valid email: $email',
         );
       } else {
-        print('Button should be DISABLED');
+        debugPrint('Button should be DISABLED');
         expect(
           button.onPressed,
           isNull,
@@ -325,18 +325,18 @@ void main() {
   debugDumpApp();
 
   // Check for different error display methods
-  print('\n=== Looking for error message ===');
-  print('Text "$tError" found: ${find.text(tError).evaluate().length} times');
-  print('SnackBar found: ${find.byType(SnackBar).evaluate().length} times');
-  print(
+  debugPrint('\n=== Looking for error message ===');
+  debugPrint('Text "$tError" found: ${find.text(tError).evaluate().length} times');
+  debugPrint('SnackBar found: ${find.byType(SnackBar).evaluate().length} times');
+  debugPrint(
     'Error icon found: ${find.byIcon(Icons.error_outline).evaluate().length} times',
   );
-  print(
+  debugPrint(
     'Red container found: ${find.byWidgetPredicate((widget) => widget is Container && widget.decoration != null && (widget.decoration as BoxDecoration).color == Colors.red.shade50).evaluate().length} times',
   );
   
   // Add more specific checks for your custom error container
-  print(
+  debugPrint(
     'Pink error container found: ${find.byWidgetPredicate((widget) => 
       widget is Container && 
       widget.decoration != null && 
