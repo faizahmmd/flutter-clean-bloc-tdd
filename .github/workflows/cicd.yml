@@ -28,7 +28,7 @@ jobs:
         # Additional parameters passed to the action
         with:
           # Install a specific Flutter version (3.0.0) for consistency
-          flutter-version: '3.0.0'
+          flutter-version: '3.38.9'
           # Use the stable release channel (not beta or dev)
           channel: 'stable'
       
@@ -62,7 +62,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.0.0'
+          flutter-version: '3.38.9'
           channel: 'stable'
       
       # Download dependencies again
