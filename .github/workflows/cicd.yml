@@ -1,33 +1,86 @@
+# The name that will appear in the GitHub Actions tab
 name: flutter ci cd
+
+# Specifies when this workflow should automatically run
 on:
+  # Run when code is pushed to the main branch
   push:
     branches: [main]
+  # Run when a pull request is opened or updated targeting the main branch
   pull_request:
     branches: [main]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.0.0'
-      - name: Install dependencies
-        run: flutter pub get
-      - name: Run tests
-        run: flutter test
 
-  build:
+# Groups all the tasks (jobs) that this workflow will perform
+jobs:
+  # First job: runs tests to verify code quality
+  test:
+    # Specifies which operating system the job should run on (Ubuntu Linux)
     runs-on: ubuntu-latest
-    needs: test
+    # List of individual tasks to execute in order
     steps:
-      - uses: actions/checkout@v2
+      # Special action: downloads your repository code onto the runner
+      - uses: actions/checkout@v4  # Updated to v4
+      
+      # Human-readable description of what this step does
+      - name: Set up Flutter
+        # Community action that installs Flutter SDK on the runner
+        uses: subosito/flutter-action@v2
+        # Additional parameters passed to the action
+        with:
+          # Install a specific Flutter version (3.0.0) for consistency
+          flutter-version: '3.0.0'
+          # Use the stable release channel (not beta or dev)
+          channel: 'stable'
+      
+      # Descriptive name for the next step
+      - name: Install dependencies
+        # Shell command to download all Flutter packages from pub.dev
+        run: flutter pub get
+      
+      # Descriptive name for running tests
+      - name: Run tests
+        # Shell command to execute all unit and widget tests
+        run: flutter test
+      
+      # Descriptive name for code quality check
+      - name: Run analyzer
+        # Shell command to check for code style issues and potential bugs
+        run: flutter analyze  # Optional but recommended
+
+  # Second job: builds the Android app (only runs if test job succeeds)
+  build:
+    # Also runs on Ubuntu Linux
+    runs-on: ubuntu-latest
+    # This job depends on 'test' - it will only start after 'test' completes successfully
+    needs: test
+    # List of build steps
+    steps:
+      # Download the code again (fresh VM, so we need it again)
+      - uses: actions/checkout@v4
+      
+      # Install Flutter again on this new VM
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.0.0'
+          channel: 'stable'
+      
+      # Download dependencies again
       - name: Install dependencies
         run: flutter pub get
-      - name: Build app
+      
+      # Compile the Flutter app into an Android APK file
+      - name: Build APK
+        # --release flag creates an optimized production build
         run: flutter build apk --release
+      
+      # Save the built APK so it can be downloaded from GitHub
+      - name: Upload APK
+        # Official GitHub action for saving files from the runner
+        uses: actions/upload-artifact@v4
+        # Parameters for the upload action
+        with:
+          # Name of the folder that will appear in the GitHub UI
+          name: app-release-apk
+          # Where to find the APK file(s) to upload
+          path: build/app/outputs/apk/release/*.apk
