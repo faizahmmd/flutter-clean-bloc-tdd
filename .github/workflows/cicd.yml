@@ -9,6 +9,8 @@ on:
   # Run when a pull request is opened or updated targeting the main branch
   pull_request:
     branches: [main]
+  # Allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
 
 # Groups all the tasks (jobs) that this workflow will perform
 jobs:
@@ -19,7 +21,7 @@ jobs:
     # List of individual tasks to execute in order
     steps:
       # Special action: downloads your repository code onto the runner
-      - uses: actions/checkout@v4  # Updated to v4
+      - uses: actions/checkout@v4
       
       # Human-readable description of what this step does
       - name: Set up Flutter
@@ -27,7 +29,7 @@ jobs:
         uses: subosito/flutter-action@v2
         # Additional parameters passed to the action
         with:
-          # Install a specific Flutter version (3.0.0) for consistency
+          # Install a specific Flutter version for consistency
           flutter-version: '3.38.9'
           # Use the stable release channel (not beta or dev)
           channel: 'stable'
@@ -45,7 +47,7 @@ jobs:
       # Descriptive name for code quality check
       - name: Run analyzer
         # Shell command to check for code style issues and potential bugs
-        run: flutter analyze  # Optional but recommended
+        run: flutter analyze
 
   # Second job: builds the Android app (only runs if test job succeeds)
   build:
@@ -84,3 +86,98 @@ jobs:
           name: app-release-apk
           # Where to find the APK file(s) to upload
           path: build/app/outputs/apk/release/*.apk
+
+  # Third job: distribute to testers via Firebase App Distribution
+  distribute-to-testers:
+    # Runs on Ubuntu Linux
+    runs-on: ubuntu-latest
+    # This job depends on 'build' - will only start after build completes successfully
+    needs: build
+    # Only run this job on pushes to main branch (not on pull requests)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # List of distribution steps
+    steps:
+      # Download the code again (fresh VM, so we need it again)
+      - uses: actions/checkout@v4
+      
+      # Install Flutter again on this new VM
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.9'
+          channel: 'stable'
+      
+      # Download dependencies again
+      - name: Install dependencies
+        run: flutter pub get
+      
+      # Compile the Flutter app into an Android APK file for testing
+      - name: Build APK for testing
+        # --release flag creates an optimized production build
+        run: flutter build apk --release
+      
+      # Upload the APK to Firebase App Distribution for testers
+      - name: Upload to Firebase App Distribution
+        # Community action that uploads APK to Firebase
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        # Parameters for the Firebase upload action
+        with:
+          # Your Firebase App ID from Firebase Console (store in GitHub Secrets)
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          # Firebase authentication token (store in GitHub Secrets)
+          token: ${{ secrets.FIREBASE_TOKEN }}
+          # Groups of testers who will receive this build
+          groups: testers, qa-team
+          # Path to the APK file to upload
+          file: build/app/outputs/apk/release/app-release.apk
+          # Release notes showing which commit triggered this build
+          releaseNotes: "Build from commit ${{ github.sha }}"
+
+  # Fourth job: deploy to Google Play Store (production)
+  deploy-to-playstore:
+    # Runs on Ubuntu Linux
+    runs-on: ubuntu-latest
+    # This job depends on 'build' - will only start after build completes successfully
+    needs: build
+    # Only run this job when a version tag is pushed (e.g., v1.0.0)
+    if: startsWith(github.ref, 'refs/tags/v')
+    # List of Play Store deployment steps
+    steps:
+      # Download the code again (fresh VM, so we need it again)
+      - uses: actions/checkout@v4
+      
+      # Install Flutter again on this new VM
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.9'
+          channel: 'stable'
+      
+      # Download dependencies again
+      - name: Install dependencies
+        run: flutter pub get
+      
+      # Compile the Flutter app into an Android App Bundle (AAB) for Play Store
+      - name: Build App Bundle
+        # --release flag creates an optimized production build
+        # App bundles are required for Play Store (smaller downloads)
+        run: flutter build appbundle --release
+      
+      # Upload the App Bundle to Google Play Store
+      - name: Deploy to Play Store
+        # Community action that uploads to Google Play Console
+        uses: r0adkll/upload-google-play@v1
+        # Parameters for the Play Store upload action
+        with:
+          # Google Play service account JSON key (store in GitHub Secrets)
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          # Your app's package name from AndroidManifest.xml
+          packageName: com.yourcompany.yourapp
+          # Path to the App Bundle file to upload
+          releaseFile: build/app/outputs/bundle/release/app-release.aab
+          # Which track to deploy to (production, beta, alpha, internal)
+          track: production
+          # Status of the release (completed = publish immediately)
+          status: completed
+          # Optional: directory containing release notes for different languages
+          whatsNewDirectory: distribution/whatsnew
