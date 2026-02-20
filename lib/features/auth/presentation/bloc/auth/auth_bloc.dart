@@ -84,10 +84,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   // Helper method to validate form
-  FormzSubmissionStatus _validateForm(Email email, Password password) {
-    return email.isValid && password.isValid
-        ? FormzSubmissionStatus
-              .success // Or .initial for just validated
-        : FormzSubmissionStatus.failure;
-  }
+  // FormzSubmissionStatus _validateForm(Email email, Password password) {
+  //   return email.isValid && password.isValid
+  //       ? FormzSubmissionStatus
+  //             .success // Or .initial for just validated
+  //       : FormzSubmissionStatus.failure;
+  // }
 }

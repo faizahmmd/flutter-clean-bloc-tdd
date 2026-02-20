@@ -11,7 +11,7 @@ abstract class User with _$User {
     required String name,
     String? avatar,
     @Default(false) bool isVerified,
-    @JsonKey(name: 'access_token') String? accessToken,
+    String? accessToken,
   }) = _User;
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);

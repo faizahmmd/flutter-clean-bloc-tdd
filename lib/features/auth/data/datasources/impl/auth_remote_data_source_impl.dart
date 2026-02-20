@@ -24,7 +24,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
         final userData = data['user'] as Map<String, dynamic>;
-        final token = data['token'] as String;
+        // final token = data['token'] as String;
         
         // In a real app, you would cache the token here
         // await localDataSource.cacheToken(token);
